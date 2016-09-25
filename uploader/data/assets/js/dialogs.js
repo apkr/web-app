@@ -117,15 +117,6 @@ function noServerConnectionPopUp() {
         undefined, OK_ONLY_DIALOG);
 }
 
-function showBetaAccessErrorPopUp() {
-    showErrorPopUp(
-        'NINJAS ARE ATTACKING OUR BETA ZONE!',
-        'z-dialog-vertical-center',
-        getImageAsDiv(ROOT_PATH+"ninja.png", "Ninja attack image") + getTextAsDiv('We are under ninja\'s attack right now and we can not fight against them and give you access at the same time. So we think, the best for you, is to try it later...when they are gone!!'),
-        'Accept',
-        undefined, OK_ONLY_DIALOG);
-}
-
 
 function showFileNotApkPopUp(name) {
     showInfoPopUp(
@@ -220,38 +211,29 @@ function fileAlreadyAnalyzedPopUp(json, file) {
     var hash = json.hash;
     samplehash = hash;
     BootstrapDialog.show({
-            title: 'This file was already scanned',
+            title: '<h4 style="color: white;font-weight: bold;font-size: 18pt;margin-top: 10px;">This file was already scanned</h4>',
             cssClass: 'z-dialog-vertical-center',
-            message: '<h4>This file, with hash</h4> <b>' + cleanHtml(hash) + '</b> <h4>was already analized on ' + json.date + ' (' + json.days + ')</h4> <h4> Result: ' + json.result + '</h4> <h4>Engine version: '+json.scannerVersion+'</h4>' + '<h4> Do you want to scan it again? </h4>',
+            message: '<h4 style="font-size:13pt;">This file, with hash</br><b>' + cleanHtml(hash) + '</b></br>was already analized on ' + json.date + ' (' + json.days + ')</br>Result: ' + json.result + '</br>You can take a look at the last analysis or analyse it again now.</h4>',
             type: BootstrapDialog.TYPE_WARNING, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
             closable: true,
             draggable: true,
             buttons: [
             {
-                label: 'Cancel',
-                action: function(dialogRef) {
-                    //remove current hash
-                    samplehash = undefined;
-                    alreadyScanned = false;
-                    dialogRef.close();
-                }
-            },
-            {
-                label: 'View report',
-                action: function(dialogRef) {
-                    dialogRef.close();
-                    var url = cleanHtml(json.resultUrl);
-                    alreadyScanned = true;
-                    openNewReportWindow(url, hash);
-                }
-            }, 
-            {
-                label: "Scan",
-                cssClass: 'btn-warning',
+                label: "Reanalyse",
                 action: function(dialogRef) {
                     dialogRef.close();
                     alreadyScanned = false;
                     upload(file.name, file, hash);
+                }
+            },
+                        {
+                label: 'View last report',
+                cssClass: 'btn-warning',
+                action: function(dialogRef) {
+                    dialogRef.close();
+                    var url = cleanHtml(json.resultUrl);
+                    alreadyScanned = true;
+                    newTab(url);
                 }
             }
             ]
@@ -268,4 +250,59 @@ function getImageAsDiv(imageName, alt, size) {
 
 function getTextAsDiv(data) {
     return '<h4 class="popup-text">' + data + '</h4>';
+}
+
+function uploadingFilePopup(filename, file, hash) {
+    var continueTimer = true;
+    BootstrapDialog.show({
+                title: '<h4 style="color: white;font-weight: bold;font-size: 18pt;margin-top: 10px;">Uploading file...</h4>',
+                message: 'Uploading',
+                cssClass: 'z-dialog-vertical-center',
+                closable: true,
+                draggable: false,
+                type: BootstrapDialog.TYPE_PRIMARY,
+                onshow: function(dialogRef){
+                    dialogRef.enableButtons(false);
+                    dialogRef.setClosable(false);
+                    dialogRef.getModalBody().html('Uploading file...');
+                    var counter = 0;
+                    //change text. refresh. upload
+                    setInterval(change, 1000);
+                    function change() {
+                        if(continueTimer){
+                            var points = ".";
+                            for(var i=0; i<counter%3; i++){
+                                points+=".";
+                            }
+                            dialogRef.getModalBody().html('<p>Please wait, do not close this window until the upload ends.</p><p>The time required for this operation depends on the file size, your bandwith and the net load.</p><p>Uploading'+points+'</p>');
+                            counter++;
+                    }
+                }
+                //function callback for action when upload finishes
+                var callback = function(data) {
+                        continueTimer = false;
+                        if (data == undefined) {
+                            //error
+                            dialogRef.setClosable(true);
+                        } else {
+                            //success
+                            dialogRef.getModalBody().html('Your file is successfully uploaded to apkr.</br>We will start analyzing it! We hope to be fast, but if you are in a rush, hit \'View report\' button');
+                            dialogRef.enableButtons(true);
+                            dialogRef.setClosable(true);
+                        }
+                    }
+                    //make upload jax request here
+                    ajax_uploadFile(filename, file, hash, callback);
+                },
+                buttons: [{
+                    label: 'View report',
+                    cssClass: 'btn-default',
+                    action: function(dialogRef){
+                        console.log('view report clicked');
+                        //redirect
+                        newTab("/report/"+hash);
+                        dialogRef.close();
+                    }
+                }]
+            });
 }

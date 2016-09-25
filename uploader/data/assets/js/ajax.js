@@ -123,7 +123,7 @@ function ajax_uploadFile(filename, file, hash, callback) {
     reader.readAsBinaryString(file);
     reader.onload = function() {
         var fileBytes = this.result;
-        var b64data = fromByteArray(fileBytes);
+        var b64data = base64.encode(fileBytes);
         formData.append("file", b64data);
         formData.append("filename", filename);
         formData.append("hash", hash);

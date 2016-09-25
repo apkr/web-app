@@ -51,34 +51,13 @@ $('#scan-all').click(function() {
     $('#scan-all').text(oldText);
 });
 
-// this is the id of the form
-$('#betazone').submit(function(e) {
-    e.preventDefault();
-    // avoid to execute the actual submit of the form.
-    //get email
-    var email = $('#user-input-email');
-    //log
-    console.log("Granting BETA access to: " + email.html());
-    //send
-
-    var callback = function() {
-        console.log("done");
-    };
-    if (userConnected) {
-        ajax_betaAccess(email, callback);
-    } else {
-        showBetaAccessErrorPopUp();
-        callback();
-    }
-});
-
 // user clicks on view report results href link
 $('#reportResultDialog').click(function(e) {
     e.preventDefault();
     //open new nw js window with the report results
     // Create a new window and get it
     var url = $('#reportResultDialog').attr('href');
-    openNewReportWindow(url, samplehash);
+    openReport(url, samplehash);
 });
 
 
